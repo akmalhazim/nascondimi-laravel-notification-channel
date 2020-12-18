@@ -17,12 +17,16 @@ class NascondimiMessage
     }
 
     /**
-     * Set the content of the WhatsApp message.
+     * Set content of the WhatsApp message.
      *
      * @param string $content
+     *
+     * @return self
      */
     public function content($content = '')
     {
         $this->content = $content;
+
+        return $this;
     }
 }
