@@ -3,7 +3,6 @@
 namespace NotificationChannels\Nascondimi\Exceptions;
 
 use Exception;
-use GuzzleHttp\Exception\ClientException;
 
 class CouldNotSendNotification extends Exception
 {
