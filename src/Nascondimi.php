@@ -2,13 +2,13 @@
 
 namespace NotificationChannels\Nascondimi;
 
-use GuzzleHttp\Client as HttpClient;
-use GuzzleHttp\RequestOptions;
-use GuzzleHttp\Http\Exception\ServerException;
-use GuzzleHttp\Http\Exception\ClientException;
-use NotificationChannels\Nascondimi\Exceptions\InvalidConfigException;
-use NotificationChannels\Nascondimi\Exceptions\CouldNotSendNotification;
 use Exception;
+use GuzzleHttp\Client as HttpClient;
+use GuzzleHttp\Http\Exception\ClientException;
+use GuzzleHttp\Http\Exception\ServerException;
+use GuzzleHttp\RequestOptions;
+use NotificationChannels\Nascondimi\Exceptions\CouldNotSendNotification;
+use NotificationChannels\Nascondimi\Exceptions\InvalidConfigException;
 
 class Nascondimi
 {
@@ -54,10 +54,10 @@ class Nascondimi
             $url = sprintf('%s/send_message', $this->endpoint);
             $response = $this->http->post($url, [
                 RequestOptions::JSON => [
-                    'key' => $this->token,
+                    'key'      => $this->token,
                     'phone_no' => $params['phone_number'],
-                    'message' => $params['message']
-                ]
+                    'message'  => $params['message'],
+                ],
             ]);
             $message = $response->getBody()->getContents();
             if ($message != 'Success') {
