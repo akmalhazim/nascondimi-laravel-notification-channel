@@ -2,7 +2,8 @@
 
 namespace NotificationChannels\Nascondimi;
 
-abstract class NascondimiMessage {
+abstract class NascondimiMessage
+{
     /**
      * Message constructor.
      *

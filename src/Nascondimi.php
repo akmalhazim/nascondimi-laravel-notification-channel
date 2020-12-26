@@ -4,8 +4,6 @@ namespace NotificationChannels\Nascondimi;
 
 use Exception;
 use GuzzleHttp\Client as HttpClient;
-use GuzzleHttp\Http\Exception\ClientException;
-use GuzzleHttp\Http\Exception\ServerException;
 use GuzzleHttp\RequestOptions;
 use NotificationChannels\Nascondimi\Exceptions\CouldNotSendNotification;
 use NotificationChannels\Nascondimi\Exceptions\InvalidConfigException;
@@ -52,13 +50,14 @@ class Nascondimi
 
         try {
             $response = $this->http->post(
-                $this->buildUri($endpoint), [
+                $this->buildUri($endpoint),
+                [
                     RequestOptions::JSON => array_merge($params, [
-                        'key' => $this->token
-                    ])
+                        'key' => $this->token,
+                    ]),
                 ]
             );
-        } catch(Exception $e) {
+        } catch (Exception $e) {
             throw $e;
         }
 
@@ -82,17 +81,18 @@ class Nascondimi
 
         try {
             $response = $this->http->post(
-                $this->buildUri('/file_upload', $this->token), [
+                $this->buildUri('/file_upload', $this->token),
+                [
                     'multipart' => [
                         [
-                            'name' => 'file',
+                            'name'     => 'file',
                             'contents' => $params['file'],
-                            'filename' => $params['filename']
-                        ]
-                    ]
+                            'filename' => $params['filename'],
+                        ],
+                    ],
                 ]
             );
-        } catch(Exception $e) {
+        } catch (Exception $e) {
             throw $e;
         }
 
@@ -111,7 +111,7 @@ class Nascondimi
     private function evaluateResponse($response)
     {
         $response = \strtolower($response);
-        switch($response) {
+        switch ($response) {
             case 'success':
                 return null;
             case 'phone_offline':
@@ -120,9 +120,9 @@ class Nascondimi
                 throw CouldNotSendNotification::otherError();
             default:
                 // test against broken error response
-                if(strpos($response, 'number not found')) {
+                if (strpos($response, 'number not found')) {
                     throw CouldNotSendNotification::numberNotFound();
-                } else if(strpos($response, 'wait_too_long')) {
+                } elseif (strpos($response, 'wait_too_long')) {
                     throw CouldNotSendNotification::waitTooLong();
                 }
         }
@@ -131,7 +131,7 @@ class Nascondimi
     /**
      * Build the endpoint URI from the given endpoint.
      *
-     * @param string $endpoint
+     * @param string      $endpoint
      * @param string|null $optionalToken
      *
      * @return string
@@ -139,9 +139,10 @@ class Nascondimi
     private function buildUri($endpoint, $optionalToken = null)
     {
         $uri = $this->baseUri.$endpoint;
-        if($optionalToken) {
+        if ($optionalToken) {
             $uri .= '/'.$optionalToken;
         }
+
         return $uri;
     }
 

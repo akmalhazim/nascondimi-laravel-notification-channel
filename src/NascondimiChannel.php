@@ -3,13 +3,13 @@
 namespace NotificationChannels\Nascondimi;
 
 use Exception;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Notifications\Events\NotificationFailed;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\Log;
+use NotificationChannels\Nascondimi\Contracts\Uploadable;
 use NotificationChannels\Nascondimi\Exceptions\CouldNotSendNotification;
 use NotificationChannels\Nascondimi\Exceptions\InvalidConfigException;
-use NotificationChannels\Nascondimi\Contracts\Uploadable;
 
 class NascondimiChannel
 {
@@ -49,17 +49,17 @@ class NascondimiChannel
                 $message = (new NascondimiMessage())->line($message);
             }
             if ($message->toNotGiven()) {
-                if(!$to = $notifiable->routeNotificationFor('nascondimi', $notification)) {
+                if (!$to = $notifiable->routeNotificationFor('nascondimi', $notification)) {
                     return null;
                 }
                 $message->to($to);
             }
 
-            if($message instanceof Uploadable) {
+            if ($message instanceof Uploadable) {
                 Log::info(\sprintf('Uploading file to Nascondimi server ... - %s', $message->getFileName()));
                 $filename = $this->nascondimi->uploadFile([
-                    'file' => $message->getFileContents(),
-                    'filename' => $message->getFileName()
+                    'file'     => $message->getFileContents(),
+                    'filename' => $message->getFileName(),
                 ]);
             }
             $params = $message->toArray();
@@ -68,7 +68,7 @@ class NascondimiChannel
             Log::debug('WhatsApp params -'.json_encode($params));
 
             return $this->nascondimi->send($message->getEndpoint(), $params);
-        } catch(Exception $exception) {
+        } catch (Exception $exception) {
             Log::error('Error communicating with Nascondimi - '.$exception->getMessage());
 
             $event = new NotificationFailed(
@@ -76,7 +76,7 @@ class NascondimiChannel
                 $notification,
                 'nascondimi',
                 [
-                    'message' => $exception->getMessage(),
+                    'message'   => $exception->getMessage(),
                     'exception' => $exception,
                 ]
             );

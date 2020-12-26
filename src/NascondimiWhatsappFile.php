@@ -27,7 +27,7 @@ class NascondimiWhatsappFile extends NascondimiMessage implements Uploadable
     public function file(string $file)
     {
         $isLocalFile = $this->isReadableFile($file);
-        if(!$isLocalFile) {
+        if (!$isLocalFile) {
             throw FileException::fileNotFound();
         }
 
@@ -64,7 +64,7 @@ class NascondimiWhatsappFile extends NascondimiMessage implements Uploadable
     }
 
     /**
-     * Determine if it's a regular and readable file
+     * Determine if it's a regular and readable file.
      *
      * @param string $file
      *
