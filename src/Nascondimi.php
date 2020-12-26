@@ -18,14 +18,14 @@ class Nascondimi
     /** @var string|null Nascondimi API Token. */
     protected $token;
 
-    /** @var string|null API endpoint URI. */
-    protected $endpoint;
+    /** @var string|null API base URI. */
+    protected $baseUri;
 
-    public function __construct($token = null, HttpClient $httpClient = null, $endpoint = null)
+    public function __construct($token = null, HttpClient $httpClient = null, $baseUri = null)
     {
         $this->token = $token;
         $this->http = $httpClient;
-        $this->endpoint($endpoint);
+        $this->baseUri($baseUri);
     }
 
     /**
@@ -44,46 +44,117 @@ class Nascondimi
      *
      * @return void
      */
-    public function send(array $params): void
+    public function send(string $endpoint, array $params)
     {
         if (blank($this->token)) {
             throw InvalidConfigException::missingToken();
         }
 
         try {
-            $url = sprintf('%s/send_message', $this->endpoint);
-            $response = $this->http->post($url, [
-                RequestOptions::JSON => [
-                    'key'      => $this->token,
-                    'phone_no' => $params['phone_number'],
-                    'message'  => $params['message'],
-                ],
-            ]);
-            $message = $response->getBody()->getContents();
-            if ($message != 'Success') {
-                throw CouldNotSendNotification::clientError($message);
-            }
-        } catch (ServerException $e) {
-            throw CouldNotSendNotification::serverError($e->getResponse()->getBody()->getContents());
-        } catch (ClientException $e) {
-            throw CouldNotSendNotification::clientError($e->getResponse()->getBody()->getContents());
-        } catch (CouldNotSendNotification $e) {
+            $response = $this->http->post(
+                $this->buildUri($endpoint), [
+                    RequestOptions::JSON => array_merge($params, [
+                        'key' => $this->token
+                    ])
+                ]
+            );
+        } catch(Exception $e) {
             throw $e;
-        } catch (Exception $e) {
-            throw CouldNotSendNotification::unknownError($e->getResponse()->getBody()->getContents());
+        }
+
+        return $this->evaluateResponse(
+            $response->getBody()->getContents()
+        );
+    }
+
+    /**
+     * Upload file to server.
+     *
+     * @param array $params
+     *
+     * @return null
+     */
+    public function uploadFile(array $params)
+    {
+        if (blank($this->token)) {
+            throw InvalidConfigException::missingToken();
+        }
+
+        try {
+            $response = $this->http->post(
+                $this->buildUri('/file_upload', $this->token), [
+                    'multipart' => [
+                        [
+                            'name' => 'file',
+                            'contents' => $params['file'],
+                            'filename' => $params['filename']
+                        ]
+                    ]
+                ]
+            );
+        } catch(Exception $e) {
+            throw $e;
+        }
+
+        return $this->evaluateResponse(
+            $response->getBody()->getContents()
+        );
+    }
+
+    /**
+     * Evaluate service provider response and throw error if necessary.
+     *
+     * @param string $response
+     *
+     * @return null
+     */
+    private function evaluateResponse($response)
+    {
+        $response = \strtolower($response);
+        switch($response) {
+            case 'success':
+                return null;
+            case 'phone_offline':
+                throw CouldNotSendNotification::phoneOffline();
+            case 'other_error':
+                throw CouldNotSendNotification::otherError();
+            default:
+                // test against broken error response
+                if(strpos($response, 'number not found')) {
+                    throw CouldNotSendNotification::numberNotFound();
+                } else if(strpos($response, 'wait_too_long')) {
+                    throw CouldNotSendNotification::waitTooLong();
+                }
         }
     }
 
     /**
-     * Set the endpoint.
+     * Build the endpoint URI from the given endpoint.
      *
      * @param string $endpoint
+     * @param string|null $optionalToken
+     *
+     * @return string
+     */
+    private function buildUri($endpoint, $optionalToken = null)
+    {
+        $uri = $this->baseUri.$endpoint;
+        if($optionalToken) {
+            $uri .= '/'.$optionalToken;
+        }
+        return $uri;
+    }
+
+    /**
+     * Set the base URI.
+     *
+     * @param string $baseUri
      *
      * @return $this
      */
-    public function endpoint(string $endpoint): self
+    public function baseUri(string $baseUri): self
     {
-        $this->endpoint = rtrim($endpoint, '/');
+        $this->baseUri = rtrim($baseUri, '/');
 
         return $this;
     }

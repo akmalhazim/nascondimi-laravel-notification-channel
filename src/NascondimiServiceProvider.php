@@ -18,7 +18,7 @@ class NascondimiServiceProvider extends ServiceProvider
                 return new Nascondimi(
                     config('services.nascondimi.token'),
                     app(HttpClient::class),
-                    config('services.nascondimi.endpoint')
+                    config('services.nascondimi.base_uri')
                 );
             });
     }
